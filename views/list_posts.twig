@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ page_title }}</title>
+</head>
+<body>
+{%  for post in posts %}
+    <h1><a href="{{ path('findPost', {id: post.id}) }}">{{ post.title }}</a></h1>
+    by <a href="/blog/author/{{ post.author }}">{{ post.author }}</a> on {{ post.createddate }}
+    {%  if post.createddate != post.modifieddate %}
+        last modified {{ post.modifieddate }}
+    {%  endif %}
+    <br/><br>
+    {{ post.body }}
+{%  endfor %}
+<br/><br/><br/><br/>
+Go the list of <a href="{{ path('findAllPosts') }}">all blog posts</a>.
+</body>
+</html>
