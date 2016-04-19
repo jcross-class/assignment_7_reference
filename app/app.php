@@ -30,7 +30,7 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     'db.options' => array(
         'driver'   => 'pdo_mysql',
         'host'     => 'localhost',
-        'dbname'   => 'silex_blog',
+        'dbname'   => 'silex_blog_a7',
         'port'     => 3306,
         'username' => 'root',
         'password' => '',
@@ -98,14 +98,16 @@ $app->register(new Silex\Provider\SecurityServiceProvider(), array(
 
 // The login form.
 $app->get('/user/login', function(Request $request) use ($app) {
+    // This route is called whenever a user wants to login or a login fails.
+    // The twig template will tell the user of any errors.
     return $app['twig']->render('login.twig', array(
         'error'         => $app['security.last_error']($request),
         'last_username' => $app['session']->get('_security.last_username'),
     ));
 });
 
-// Show a list of the current user has.
-$app->get('/user/show_roles', function () use ($app) {
+// Show a list of the roles a current user has.
+$app->get('/user/show-roles', function () use ($app) {
     // Get the token for currently logged in user.
     $token = $app['security.token_storage']->getToken();
     // If the token is null, no user is logged in.
@@ -113,6 +115,7 @@ $app->get('/user/show_roles', function () use ($app) {
         // Use the token to get the user object for the currently logged in user.
         $user = $token->getUser();
     } else {
+        // We shouldn't get here, because the user should have to be logged in to get to this route.
         return "There is no current user.  This shouldn't happen.";
     }
 
@@ -153,43 +156,47 @@ $app->get('/blog/id/{id}', function ($id) use ($app) {
 ->bind('findPost');
 
 // A controller to process the route for /blog/author/{author} where author is the post author.
-// YOUR CODE HERE
-
-// HINTS:
-// Look at the /blog/id/{id} route to see how to specify the route.  Since you will be getting
-// multiple posts, use a $app->render call like the one used in the /blog/ route that lists
-// all the blog posts.
-//
-// You will need to add a getByAuthor method to the Post class.
+// Implemented as a previous assignment.
 
 $app->match('/blog/new-post', function (Request $request) use ($app) {
+    // Default data for the form.
     $data = array(
         'author' => 'Your name',
         'title' => 'Title of the Post',
         'body' => 'Blog post content',
     );
 
+    // Create a new form builder object and give it the default data.
+    // Add 2 fields of type text: one for author and one for title.  Neither can be blank.
+    // Add 1 field for body of type text area.  It must be at least 20 characters.
+    // Get the finished form from the form builder and store it to the $form variable.
     $form = $app->form($data)
-        ->add('author',  TextType::class)
+        ->add('author',  TextType::class, array('constraints' => array(new Assert\NotBlank())))
         ->add('title', TextType::class, array('constraints' => array(new Assert\NotBlank())))
         ->add('body', TextareaType::class, array('constraints' => array(new Assert\NotBlank(), new Assert\Length(array('min' => 20)))))
         ->getForm();
 
+    // Use the form to handle the request.
     $form->handleRequest($request);
 
+    // Only create a new post if the form input passes all the given validation rules.
     if ($form->isValid()) {
+        // Get the form input.
         $data = $form->getData();
 
+        // Use the PostFactory to create a new Post instance.
         $post = SilexBlog\PostFactory::create($data['author'], $data['title'], $data['body']);
+        // Use the PostRepository to persist the Post to the database.
         $app['repository.post']->save($post);
 
-        // redirect somewhere
-        return $app->redirect('/blog/');
+        // Redirect the user to the list of all blog posts.
+        return $app->redirect($app->path('findAllPosts'));
     }
 
-    // display the form
+    // The form data is either invalid or the form is being display for the first time.
+    // So, render the form template.
     return $app->render('new-post.twig', array('form' => $form->createView()));
-
 });
+
 // Return the service container used by web/index.php
 return $app;

@@ -17,16 +17,6 @@ class Post
         $this->modified_date = $modified_date;
         $this->body = $body;
     }
-
-    // Grab all posts from the database written by the given author.
-    // YOUR CODE HERE
-    //
-    // HINTS:
-    // Use getAll as the basis for this method.  Modify the method parameters to accept an author variable.
-    // You want use to fetchAll to get all the results.  For the SQL query, use LIKE to match the given author
-    // against the author column. Look at the query for getById to see how to make the MySQL query using a
-    // parameter (how to pass in author to the query).
-
     
     /**
      * @return mixed
